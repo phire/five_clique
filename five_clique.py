@@ -61,6 +61,8 @@ for i in tqdm(range(len(words))):
 				Nijkl = Nijk & words[l][1]
 				# all remaining neighbors form a 5-clique with i, j, k, and l
 				for r in Nijkl:
+					if r < l:
+						continue
 					Cliques.append([i, j, k, l, r])
 
 print('completed! Found %d cliques' % len(Cliques))
