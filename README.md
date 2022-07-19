@@ -25,7 +25,7 @@ The solution proposed in this notebook is based on a graph representation of the
 
 How do we find a 5-clique, now? We start at some word i and start building a clique from there. First, we consider all neighbors j. The third word k in the clique now needs to be neighbor to both i and j. Therefore, we consider only words k in the intersection of the neighbor sets of i and j. Next, we consider words l in the intersection of the neighbor sets of i, j, and k. Finally, any words in the intersection of the neighbor sets of i, j, k, and l form a 5-clique with i, j, k, and l.
 
-In the worst case, this scheme has a complexity of O(n^5), where n is the number of 5-letter words in the English language. This seems infeasible. However, the size of the intersection rapidly declines the deeper we go into the clique. Therefore, we are finished in roughly an hour, rather than a month, as in the Parker algorithm.
+In the worst case, this scheme has a complexity of O(n^5), where n is the number of 5-letter words in the English language. This seems infeasible. However, the size of the intersection rapidly declines the deeper we go into the clique. Therefore, we are finished in 21 minutes and 46 seconds, rather than a month, as in the Parker algorithm.
 
 But Parker gave it a go. And that's something.
 
