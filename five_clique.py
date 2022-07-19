@@ -25,7 +25,7 @@ print('--- loading graph ---')
 
 # load the graph first
 words = []
-with open('word_graph.csv') as f:
+with open('word_graph.csv', newline='', encoding='utf-8') as f:
 	reader = csv.reader(f, delimiter = '\t')
 	for row in tqdm(reader):
 		word = row[0]
@@ -66,7 +66,7 @@ for i in tqdm(range(len(words))):
 print('completed! Found %d cliques' % len(Cliques))
 
 print('--- write to output ---')
-with open('cliques.csv', 'w') as f:
+with open('cliques.csv', 'w', newline='', encoding='utf-8') as f:
 	writer = csv.writer(f, delimiter = '\t')
 	for cliq in Cliques:
 		# get word representation of cliques and write to output

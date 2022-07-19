@@ -49,7 +49,7 @@ for i in tqdm(range(len(words))):
 			neighbors.add(j)
 
 print('--- write to output ---')
-with open('word_graph.csv', 'w') as f:
+with open('word_graph.csv', 'w', newline='', encoding='utf-8') as f:
 	writer = csv.writer(f, delimiter = '\t')
 	for i in tqdm(range(len(words))):
 		writer.writerow([words[i][0], str(list(sorted(words[i][2])))])
