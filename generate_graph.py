@@ -107,13 +107,23 @@ for i in tqdm(range(len(words))):
 
 print('completed! Found %d cliques' % len(Cliques))
 
+def RecursiveExpand(lst):
+	head, *tail = lst
+	if not tail:
+		return [[w] for w in anagrams[words[head]]]
+	tail = RecursiveExpand(tail)
+
+	return [[w, *t] for w in anagrams[words[head]] for t in tail]
+
+ExpandedCliques = []
+for cliq in Cliques:
+	ExpandedCliques += [sorted(c) for c in RecursiveExpand(cliq)]
+
+print(f'expanded to {len(ExpandedCliques)} cliques: %d with anagrams')
+
 print('--- write to output ---')
 with open('cliques.csv', 'w', newline='', encoding='utf-8') as f:
 	writer = csv.writer(f, delimiter = '\t')
-	cliq_words = []
-	for cliq in Cliques:
-		# get word representation of cliques and write to output
-		cliq_words.append(sorted([anagrams[words[i]][0] for i in cliq]))
 
-	for cliq_words in sorted(cliq_words):
+	for cliq_words in sorted(ExpandedCliques):
 		writer.writerow(cliq_words)
