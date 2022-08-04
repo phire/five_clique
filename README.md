@@ -52,11 +52,17 @@ But Benjamin gave it a go. And that's something.
  * Pruning was added to the main search. 
    We keep track of branches that have been proven to not contain results, and avoid re-calculating
    them. This provides a 6-7x speedup. 
- * The two steps were merged, which reduced the time to serialize and deserialize the file. With the
-   other optimizations, this was now a major bottleneck
+ * The two steps were merged, which eliminated the time needed to serialize and deserialize the graph.
+   With the other optimizations, this was now a major bottleneck
+ * (Contributed by @dougallj, twitter) Move the one-way relationship test from the O(n^5) search loop,
+   to the the O(n^2) neighborhood building loop. This reduces significant strain on more expensive loop
+   and results in a 2-3x speedup
+ * (Contributed by Dinoguy1000, gitlab) Fix typo that checked len(Nij) instead of len(Nijk)
+   It's about a 5% speedup
+ * Various small optimizations to the O(n^5) loop. It's really sensitive, especially in cpython
 
 With these improvement, execution time on my machine with regular python improves from 19.5min to just
-36 seconds. Replacing cpython with pypy improves things further to about 14.5 seconds. 
+14.5 seconds. Replacing cpython with pypy improves things further to about 5 seconds. 
 
 ### Failed optimization ideas
 

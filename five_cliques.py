@@ -66,11 +66,13 @@ print('--- building neighborhoods ---')
 # compute the 'neighbors' for each word, i.e. other words which have entirely
 # distinct letters
 words = sorted(list(anagrams.keys()))
-for char_set in tqdm(words, total=len(words)):
+for i, char_set in tqdm(enumerate(words), total=len(words)):
 	neighbors = graph[char_set]
-	for i, other_set in enumerate(words):
+
+	# We only need one-direction of each relationship
+	for j, other_set in enumerate(words[i+1:], i+1):
 		if char_set & other_set == 0:
-			neighbors.add(i)
+			neighbors.add(j)
 
 print('--- finding cliques ---')
 
@@ -89,7 +91,7 @@ for i in tqdm(range(len(words))):
 	Ni, i_set = graphs[i]
 	for j in Ni:
 		Nj, j_set = graphs[j]
-		if j < i or (i_set | j_set) in prune:
+		if (i_set | j_set) in prune:
 			continue
 		# the remaining candidates are only the words in the intersection
 		# of the neighborhood sets of i and j
@@ -101,24 +103,21 @@ for i in tqdm(range(len(words))):
 		have_ij = False
 		for k in Nij:
 			Nk, k_set = graphs[k]
-			if k < j or (i_set | j_set | k_set) in prune:
+			if (i_set | j_set | k_set) in prune:
 				continue
 			# intersect with neighbors of k
 			Nijk = Nij & Nk
-			if len(Nij) < 2:
+			if len(Nijk) < 2:
 				prune.add(i_set | j_set | k_set)
 				continue
 
 			have_ijk = False
 			for l in Nijk:
-				if l < k:
-					continue
 				# intersect with neighbors of l
 				Nijkl = Nijk & graphs[l][0]
 				# all remaining neighbors form a 5-clique with i, j, k, and l
+
 				for r in Nijkl:
-					if r < l:
-						continue
 					Cliques.append([i, j, k, l, r])
 					have_ij = True
 					have_ijk = True
@@ -145,7 +144,7 @@ ExpandedCliques = []
 for cliq in Cliques:
 	ExpandedCliques += [sorted(c) for c in RecursiveExpand(cliq)]
 
-print(f'expanded to {len(ExpandedCliques)} cliques: %d with anagrams')
+print(f'expanded to {len(ExpandedCliques)} cliques with anagrams')
 
 print('--- write to output ---')
 with open('cliques.csv', 'w', newline='', encoding='utf-8') as f:
