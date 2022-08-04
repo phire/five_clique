@@ -19,8 +19,27 @@ from tqdm import tqdm
 import csv
 
 # prepare a data structure for all five-letter words in string and set representation
-words = []
 anagrams = {}
+graph = {}
+
+# This is a compact representation of a "char set" that fits in just 26 bits
+# each bit represents a letter in the alphabet
+# we can quickly check for an intersection between two words with the bitwise AND operator
+# or union them with bitwise OR
+def alphaBit(word):
+	ret = 0
+	for char in word:
+		alphaIndex = (ord(char) | 0x20) - ord('a')
+		ret |= 1 << alphaIndex
+	return ret
+
+def bitCount(num):
+	#return num.bit_count() # faster, but requires python 3.10+
+	count = 0
+	while num:
+		num &= num - 1
+		count += 1
+	return count
 
 print('--- reading words file ---')
 
@@ -31,38 +50,34 @@ with open('words_alpha.txt') as f:
 		if len(word) != 5:
 			continue
 		# compute set representation of the word
-		char_set = set(word)
-		if len(char_set) != 5:
+		char_set = alphaBit(word)
+		if bitCount(char_set) != 5:
 			continue
 
-		sorted_chars = ''.join(sorted(char_set))
-
-		if sorted_chars in anagrams:
-			anagrams[sorted_chars].append(word)
+		if char_set in anagrams:
+			anagrams[char_set].append(word)
 			continue
 
-		anagrams[sorted_chars] = [word]
-
-		# append the word, the set of characters in the word, and an empty set
-		# for all the 'neighbors' of the word, which we will compute later
-		words.append((word, char_set, set()))
+		anagrams[char_set] = [word]
+		graph[char_set]	= set()
 
 print('--- building neighborhoods ---')
 
 # compute the 'neighbors' for each word, i.e. other words which have entirely
 # distinct letters
-for i in tqdm(range(len(words))):
-	char_set  = words[i][1]
-	neighbors = words[i][2]
-	for j in range(len(words)):
-		if len(char_set & words[j][1]) == 0:
-			neighbors.add(j)
+words = sorted(list(anagrams.keys()))
+for char_set in tqdm(words, total=len(words)):
+	neighbors = graph[char_set]
+	for i, other_set in enumerate(words):
+		if char_set & other_set == 0:
+			neighbors.add(i)
+
 
 print('--- write to output ---')
 with open('word_graph.csv', 'w', newline='', encoding='utf-8') as f:
 	writer = csv.writer(f, delimiter = '\t')
-	for i in tqdm(range(len(words))):
-		writer.writerow([words[i][0], str(list(sorted(words[i][2])))])
+	for i, char_set in tqdm(enumerate(words)):
+		writer.writerow([anagrams[char_set][0], str(list(sorted(graph[char_set])))])
 
 with open('anagrams.csv', 'w', newline='', encoding='utf-8') as f:
 	writer = csv.writer(f, delimiter = '\t')
