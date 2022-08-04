@@ -72,14 +72,48 @@ for char_set in tqdm(words, total=len(words)):
 		if char_set & other_set == 0:
 			neighbors.add(i)
 
+print('--- start clique finding (THIS WILL TAKE LONG!) ---')
+
+# start clique finding
+graphs = [graph[i] for i in words]
+Cliques = []
+for i in tqdm(range(len(words))):
+	Ni = graphs[i]
+	for j in Ni:
+		if j < i:
+			continue
+		# the remaining candidates are only the words in the intersection
+		# of the neighborhood sets of i and j
+		Nij = Ni & graphs[j]
+		if len(Nij) < 3:
+			continue
+		for k in Nij:
+			if k < j:
+				continue
+			# intersect with neighbors of k
+			Nijk = Nij & graphs[k]
+			if len(Nij) < 2:
+				continue
+			for l in Nijk:
+				if l < k:
+					continue
+				# intersect with neighbors of l
+				Nijkl = Nijk & graphs[l]
+				# all remaining neighbors form a 5-clique with i, j, k, and l
+				for r in Nijkl:
+					if r < l:
+						continue
+					Cliques.append([i, j, k, l, r])
+
+print('completed! Found %d cliques' % len(Cliques))
 
 print('--- write to output ---')
-with open('word_graph.csv', 'w', newline='', encoding='utf-8') as f:
+with open('cliques.csv', 'w', newline='', encoding='utf-8') as f:
 	writer = csv.writer(f, delimiter = '\t')
-	for i, char_set in tqdm(enumerate(words)):
-		writer.writerow([anagrams[char_set][0], str(list(sorted(graph[char_set])))])
+	cliq_words = []
+	for cliq in Cliques:
+		# get word representation of cliques and write to output
+		cliq_words.append(sorted([anagrams[words[i]][0] for i in cliq]))
 
-with open('anagrams.csv', 'w', newline='', encoding='utf-8') as f:
-	writer = csv.writer(f, delimiter = '\t')
-	for key in anagrams:
-		writer.writerow([key, *anagrams[key]])
+	for cliq_words in sorted(cliq_words):
+		writer.writerow(cliq_words)
