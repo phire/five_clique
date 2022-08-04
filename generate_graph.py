@@ -20,6 +20,7 @@ import csv
 
 # prepare a data structure for all five-letter words in string and set representation
 words = []
+anagrams = {}
 
 print('--- reading words file ---')
 
@@ -33,6 +34,15 @@ with open('words_alpha.txt') as f:
 		char_set = set(word)
 		if len(char_set) != 5:
 			continue
+
+		sorted_chars = ''.join(sorted(char_set))
+
+		if sorted_chars in anagrams:
+			anagrams[sorted_chars].append(word)
+			continue
+
+		anagrams[sorted_chars] = [word]
+
 		# append the word, the set of characters in the word, and an empty set
 		# for all the 'neighbors' of the word, which we will compute later
 		words.append((word, char_set, set()))
@@ -53,3 +63,8 @@ with open('word_graph.csv', 'w', newline='', encoding='utf-8') as f:
 	writer = csv.writer(f, delimiter = '\t')
 	for i in tqdm(range(len(words))):
 		writer.writerow([words[i][0], str(list(sorted(words[i][2])))])
+
+with open('anagrams.csv', 'w', newline='', encoding='utf-8') as f:
+	writer = csv.writer(f, delimiter = '\t')
+	for key in anagrams:
+		writer.writerow([key, *anagrams[key]])
