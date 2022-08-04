@@ -28,8 +28,8 @@ graph = {}
 # or union them with bitwise OR
 def alphaBit(word):
 	ret = 0
-	for char in word:
-		alphaIndex = (ord(char) | 0x20) - ord('a')
+	for char in word.lower():
+		alphaIndex = ord(char) - ord('a')
 		ret |= 1 << alphaIndex
 	return ret
 
@@ -59,18 +59,16 @@ with open('words_alpha.txt') as f:
 			continue
 
 		anagrams[char_set] = [word]
-		graph[char_set]	= set()
 
 print('--- building neighborhoods ---')
 
 # compute the 'neighbors' for each word, i.e. other words which have entirely
 # distinct letters
-words = sorted(list(anagrams.keys()))
-for char_set in tqdm(words, total=len(words)):
-	neighbors = graph[char_set]
-	for i, other_set in enumerate(words):
-		if char_set & other_set == 0:
-			neighbors.add(i)
+for char_set in tqdm(sorted(anagrams.keys())):
+	for other_set, neighbours in graph.items():
+		if not other_set & char_set:
+			neighbours.add(char_set)
+	graph[char_set] = set()
 
 print('--- finding cliques ---')
 
@@ -83,52 +81,46 @@ print('--- finding cliques ---')
 prune = set()
 
 # start clique finding
-graphs = [(graph[char_set], char_set) for char_set in words]
 Cliques = []
-for i in tqdm(range(len(words))):
-	Ni, i_set = graphs[i]
+for i, Ni in tqdm(graph.items()):
 	for j in Ni:
-		Nj, j_set = graphs[j]
-		if j < i or (i_set | j_set) in prune:
+		ij = i | j
+		if ij in prune:
 			continue
 		# the remaining candidates are only the words in the intersection
 		# of the neighborhood sets of i and j
-		Nij = Ni & Nj
+		Nij = Ni & graph[j]
 		if len(Nij) < 3:
-			prune.add(i_set | j_set)
+			prune.add(ij)
 			continue
 
 		have_ij = False
 		for k in Nij:
-			Nk, k_set = graphs[k]
-			if k < j or (i_set | j_set | k_set) in prune:
+			ijk = ij | k
+			if ijk in prune:
 				continue
 			# intersect with neighbors of k
-			Nijk = Nij & Nk
+			Nijk = Nij & graph[k]
 			if len(Nij) < 2:
-				prune.add(i_set | j_set | k_set)
+				prune.add(ijk)
 				continue
 
 			have_ijk = False
 			for l in Nijk:
-				if l < k:
-					continue
 				# intersect with neighbors of l
-				Nijkl = Nijk & graphs[l][0]
+				Nijkl = Nijk & graph[l]
 				# all remaining neighbors form a 5-clique with i, j, k, and l
 				for r in Nijkl:
-					if r < l:
-						continue
 					Cliques.append([i, j, k, l, r])
 					have_ij = True
 					have_ijk = True
 
 			if not have_ijk:
 				# we didn't find anything on this branch, prune it
-				prune.add(i_set | j_set | k_set)
+				prune.add(ijk)
 		if not have_ij:
 			# we didn't find anything on this branch, prune it
-			prune.add(i_set | j_set)
+			prune.add(ij)
 
 print('completed! Found %d cliques' % len(Cliques))
 print(f'{len(prune)} branches of the tree were pruned')
@@ -136,10 +128,10 @@ print(f'{len(prune)} branches of the tree were pruned')
 def RecursiveExpand(lst):
 	head, *tail = lst
 	if not tail:
-		return [[w] for w in anagrams[words[head]]]
+		return [[w] for w in anagrams[head]]
 	tail = RecursiveExpand(tail)
 
-	return [[w, *t] for w in anagrams[words[head]] for t in tail]
+	return [[w, *t] for w in anagrams[head] for t in tail]
 
 ExpandedCliques = []
 for cliq in Cliques:
