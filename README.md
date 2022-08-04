@@ -34,7 +34,6 @@ But Parker gave it a go. And that's something.
 To reproduce my calculation, please execute the following steps:
 
 1. Download the `words_alpha.txt` file from https://github.com/dwyl/english-words (this is the same file that Parker used).
-2. Run the `generate_graph.py` file. (should take at most a few minutes)
-3. Run the `five_clique.py` file. (should take at most a few hours)
+2. Run the `five_cliques.py` file. (should take at most a few min)
 
 All five-word groups with distinct letters should then be in the file `cliques.csv`.
