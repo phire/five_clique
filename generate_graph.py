@@ -72,40 +72,66 @@ for char_set in tqdm(words, total=len(words)):
 		if char_set & other_set == 0:
 			neighbors.add(i)
 
-print('--- start clique finding (THIS WILL TAKE LONG!) ---')
+print('--- finding cliques ---')
+
+# We maintain a set of tree branches that we have already visited and know
+# don't contain any clique subsets
+#
+# For performance reasons, it's only worth pruning layers 2 and 3
+# layer 1 is already cached with the neighbor calculation above, and if you
+# get to layer 4, it's quicker to just complete the search
+prune = set()
 
 # start clique finding
-graphs = [graph[i] for i in words]
+graphs = [(graph[char_set], char_set) for char_set in words]
 Cliques = []
 for i in tqdm(range(len(words))):
-	Ni = graphs[i]
+	Ni, i_set = graphs[i]
 	for j in Ni:
-		if j < i:
+		Nj, j_set = graphs[j]
+		if j < i or (i_set | j_set) in prune:
 			continue
 		# the remaining candidates are only the words in the intersection
 		# of the neighborhood sets of i and j
-		Nij = Ni & graphs[j]
+		Nij = Ni & Nj
 		if len(Nij) < 3:
+			prune.add(i_set | j_set)
 			continue
+
+		have_ij = False
 		for k in Nij:
-			if k < j:
+			Nk, k_set = graphs[k]
+			if k < j or (i_set | j_set | k_set) in prune:
 				continue
 			# intersect with neighbors of k
-			Nijk = Nij & graphs[k]
+			Nijk = Nij & Nk
 			if len(Nij) < 2:
+				prune.add(i_set | j_set | k_set)
 				continue
+
+			have_ijk = False
 			for l in Nijk:
 				if l < k:
 					continue
 				# intersect with neighbors of l
-				Nijkl = Nijk & graphs[l]
+				Nijkl = Nijk & graphs[l][0]
 				# all remaining neighbors form a 5-clique with i, j, k, and l
 				for r in Nijkl:
 					if r < l:
 						continue
 					Cliques.append([i, j, k, l, r])
+					have_ij = True
+					have_ijk = True
+
+			if not have_ijk:
+				# we didn't find anything on this branch, prune it
+				prune.add(i_set | j_set | k_set)
+		if not have_ij:
+			# we didn't find anything on this branch, prune it
+			prune.add(i_set | j_set)
 
 print('completed! Found %d cliques' % len(Cliques))
+print(f'{len(prune)} branches of the tree were pruned')
 
 def RecursiveExpand(lst):
 	head, *tail = lst
